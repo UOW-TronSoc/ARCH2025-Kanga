@@ -1,0 +1,5 @@
+bool heat_status
+bool water_status
+bool ilmenite_status
+bool deploy_heat
+bool deploy_sensors

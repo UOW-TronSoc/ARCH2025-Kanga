@@ -16,6 +16,8 @@
   rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/DrivetrainControl.msg"
     "msg/DrivetrainFeedback.msg"
+    "msg/ScienceControl.msg"
+    "msg/ScienceFeedback.msg"
   )
 
   ament_export_dependencies(rosidl_default_runtime)

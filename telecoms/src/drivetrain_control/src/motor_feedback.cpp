@@ -15,7 +15,6 @@ public:
         publisher_ = this->create_publisher<custom_msgs::msg::DrivetrainFeedback>("drivetrain_feedback", 10);
         timer_ = this->create_wall_timer(10ms, std::bind(&MotorFeedbackNode::publish_message, this));
 
-       
     }
 
 private:
