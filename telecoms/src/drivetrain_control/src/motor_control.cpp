@@ -24,8 +24,8 @@ private:
         int64_t duration_since_epoch = chrono::duration_cast<chrono::nanoseconds>(time.time_since_epoch()).count();
 
         int64_t latency = duration_since_epoch - msg->epoch_time;
-        RCLCPP_INFO(this->get_logger(), "Left Drive: '%d', Right Drive: '%d', Latency: '%.3f' ms",
-            msg->left_drive, msg->right_drive, latency * 1e-6);
+        RCLCPP_INFO(this->get_logger(), "Left Front: '%d', Left Back: '%d', 'Right Back: '%d', Right Front: '%d'",
+            msg->lf_drive, msg->lb_drive, msg->rb_drive, msg->rf_drive);
     }
 
     rclcpp::Subscription<custom_msgs::msg::DrivetrainControl>::SharedPtr subscription_;

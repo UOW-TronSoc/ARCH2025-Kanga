@@ -3,3 +3,10 @@
 */log
 
 .vscode
+
+# Python
+__pycache__/
+
+# OS files
+.DS_Store
+motionTesting/src/ros_odrive
