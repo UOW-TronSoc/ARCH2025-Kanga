@@ -77,7 +77,7 @@ private:
         struct can_frame response;
         while (true) {
             if (read(can_socket_, &response, sizeof(struct can_frame)) > 0) {
-                if (response.can_id == (node_id_ << 5) | 0x01) { // Heartbeat message
+                if (response.can_id == ((node_id_ << 5) | 0x01)) { // Heartbeat message
                     uint32_t error;
                     uint8_t axis_state;
                     std::memcpy(&error, response.data, sizeof(uint32_t));
@@ -92,7 +92,7 @@ private:
     }
 
     void velocity_callback(const std_msgs::msg::Float64::SharedPtr msg) {
-        float velocity = std::max(-20.0, std::min(20.0, msg->data));
+        double velocity = std::max(-20.0, std::min(20.0, msg->data));
         struct can_frame frame;
         frame.can_id = (node_id_ << 5) | 0x0d;
         frame.can_dlc = 8;

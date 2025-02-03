@@ -1,0 +1,3 @@
+float32 water_percent
+float32 temperature
+float32 ilmenite_percent

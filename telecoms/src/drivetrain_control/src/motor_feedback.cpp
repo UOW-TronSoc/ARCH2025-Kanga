@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "custom_msgs/msg/drivetrain_feedback.hpp"
 #include "custom_msgs/msg/drivetrain_control.hpp"
+#include "std_msgs/msg/string.hpp"
 #include <chrono>
 #include <memory>
 
@@ -13,8 +14,8 @@ public:
     MotorFeedbackNode() : Node("drivetrain_feedback_node")
     {
         publisher_ = this->create_publisher<custom_msgs::msg::DrivetrainFeedback>("drivetrain_feedback", 10);
+        log_publisher_ = this->create_publisher<std_msgs::msg::String>("log", 10);
         timer_ = this->create_wall_timer(10ms, std::bind(&MotorFeedbackNode::publish_message, this));
-
     }
 
 private:
@@ -31,10 +32,15 @@ private:
         message.wheel_torque = {8.0, 9.0, 10.0, 11.0};
 
         RCLCPP_INFO(this->get_logger(), "Publishing DrivetrainFeedback - Epoch Time: %ld", message.epoch_time);
-        publisher_->publish(message);
+
+        auto log_message = std_msgs::msg::String();
+        log_message.data = "Hello, world! " + std::to_string(this->count_++);
+        RCLCPP_INFO(this->get_logger(), "'%s'", log_message.data.c_str());
+        log_message->publish(message);
     }
 
     rclcpp::Publisher<custom_msgs::msg::DrivetrainFeedback>::SharedPtr publisher_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr log_publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
 };
 
