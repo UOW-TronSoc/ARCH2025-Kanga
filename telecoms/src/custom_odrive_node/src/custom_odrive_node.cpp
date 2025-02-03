@@ -30,15 +30,6 @@ using namespace std;
 class ODriveCANNode : public rclcpp::Node {
 public:
     ODriveCANNode() : Node("odrive_can_node"), can_socket_(-1) {
-        if (!setup_can_interface("can1")) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set up CAN interface.");
-            rclcpp::shutdown();
-        } else {
-            change_state(8, 1);
-            change_state(8, 2);
-            change_state(8, 3);
-            change_state(8, 4);
-        }
 
         subscription_ = this->create_subscription<custom_msgs::msg::DrivetrainControl>(
             "drive_commands", 10,
@@ -47,6 +38,16 @@ public:
         publisher_ = this->create_publisher<custom_msgs::msg::DrivetrainFeedback>("drivetrain_feedback", 10);
         log_publisher_ = this->create_publisher<std_msgs::msg::String>("rover_logs", 10);
         // timer_ = this->create_wall_timer(10ms, std::bind(&ODriveCANNode::publish_message, this));
+
+        if (!setup_can_interface("can1")) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set up CAN interface");
+            rclcpp::shutdown();
+        } else {
+            change_state(8, 1);
+            change_state(8, 2);
+            change_state(8, 3);
+            change_state(8, 4);
+        }
     }
 
     ~ODriveCANNode() {
@@ -62,8 +63,11 @@ public:
     void change_state(int state, int node_id) {
         RCLCPP_INFO(this->get_logger(), "Changing Node %d to state %d", node_id, state);
         auto log_message = std_msgs::msg::String();
+        RCLCPP_INFO(this->get_logger(), "1");
         log_message.data = "Changing Node " + std::to_string(node_id) + " to state " + std::to_string(state);
+        RCLCPP_INFO(this->get_logger(), "2");
         log_publisher_->publish(log_message);
+        RCLCPP_INFO(this->get_logger(), "3");
         struct can_frame frame;
         frame.can_id = (node_id << 5) | 0x07;
         frame.can_dlc = 4;
