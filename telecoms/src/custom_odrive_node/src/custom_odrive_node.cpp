@@ -47,6 +47,12 @@ public:
             change_state(8, 2);
             change_state(8, 3);
             change_state(8, 4);
+
+
+            // velocity_callback(-20, 1);
+            // velocity_callback(-20, 2);
+            // velocity_callback(20, 3);
+            // velocity_callback(20, 4);
         }
     }
 
@@ -100,7 +106,7 @@ private:
     rclcpp::Publisher<custom_msgs::msg::DrivetrainFeedback>::SharedPtr publisher_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr log_publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
-    float max_speed_ = 20.0f;
+    float max_speed_ = 10.0f;
 
     bool setup_can_interface(const std::string &interface) {
         struct ifreq ifr;
@@ -142,10 +148,39 @@ private:
 
         log_publisher_->publish(log_message);
 
-        velocity_callback(msg->lf_drive * -0.01 * max_speed_, 1);
-        velocity_callback(msg->lb_drive * -0.01 * max_speed_, 2);
-        velocity_callback(msg->rb_drive * 0.01 * max_speed_, 3);
-        velocity_callback(msg->rf_drive * 0.01 * max_speed_, 4);
+        if (abs(msg->lf_drive) > 10) {
+            velocity_callback(msg->lf_drive * -0.01 * max_speed_, 1);
+        } else {
+            velocity_callback(0, 1);
+        }
+
+        if (abs(msg->lb_drive) > 10) {
+            velocity_callback(msg->lb_drive * -0.01 * max_speed_, 2);
+        } else {
+            velocity_callback(0, 2);
+        }
+
+        if (abs(msg->rb_drive) > 10) {
+            velocity_callback(msg->rb_drive * 0.01 * max_speed_, 3);
+        } else {
+            velocity_callback(0, 3);
+        }
+
+        if (abs(msg->rf_drive) > 10) {
+            velocity_callback(msg->rf_drive * 0.01 * max_speed_, 4);
+        } else {
+            velocity_callback(0, 4);
+        }
+
+        // velocity_callback(msg->lf_drive * -0.01 * max_speed_, 1);
+        // velocity_callback(msg->lb_drive * -0.01 * max_speed_, 2);
+        // velocity_callback(msg->rb_drive * 0.01 * max_speed_, 3);
+        // velocity_callback(msg->rf_drive * 0.01 * max_speed_, 4);
+
+        // velocity_callback(-5, 1);
+        // velocity_callback(-5, 2);
+        // velocity_callback(5, 3);
+        // velocity_callback(5, 4);
     }
 
     void publish_message()                                                                          

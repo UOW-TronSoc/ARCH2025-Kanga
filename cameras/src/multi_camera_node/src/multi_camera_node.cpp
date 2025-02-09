@@ -25,7 +25,7 @@ public:
     // Declare (and optionally get) private parameters for resolution and fps
     this->declare_parameter<int>("width", 640);
     this->declare_parameter<int>("height", 480);
-    this->declare_parameter<int>("fps", 15);
+    this->declare_parameter<int>("fps", 5);
 
     // Read the parameters
     width_ = this->get_parameter("width").as_int();
@@ -39,10 +39,9 @@ public:
     // and 2 generic webcams enumerated as /dev/video2, /dev/video3, you could list them like so:
     camera_device_paths_ = {
       "/dev/video4",  // Realsense D435i #1 (RGB)
-      "/dev/video10",  // Realsense D435i #2 (RGB)
-      "/dev/video12",  // Generic Webcam #1
-      "/dev/video14",   // Generic Webcam #2
-      // "/dev/video19"   // Generic Webcam #2
+      // "/dev/video10",  // Realsense D435i #2 (RGB)
+      // "/dev/video12",  // Generic Webcam #1
+      // "/dev/video14",   // Generic Webcam #2
     };
 // 
     // For each device, create a VideoCapture and a publisher
