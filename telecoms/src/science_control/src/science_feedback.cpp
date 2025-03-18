@@ -28,8 +28,8 @@ private:
         int64_t duration_since_epoch = chrono::duration_cast<chrono::nanoseconds>(time.time_since_epoch()).count();
 
         // message.epoch_time = duration_since_epoch;
-        message.water_percent = 40.0 + (rand() % 301)/100.0;
-        message.temperature = 20.0 + (rand() % 201)/100.0;
+        message.water_percent = 11.0 + (rand() % 301)/100.0;
+        message.temperature = 28.0 + (rand() % 201)/100.0;
         message.ilmenite_percent = 0;
 
         RCLCPP_INFO(this->get_logger(), "Publishing Science Feedback - Epoch Time: %lf", message.temperature);

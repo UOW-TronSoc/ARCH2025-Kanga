@@ -1,0 +1,7 @@
+HOW TO USE RTABMAP WITH D435i
+
+Launch rtabmap script
+Open Rviz2 on Basestation
+IMPORTANT PART!!!! NOW:
+Add a Mapcloud, (Its in Rtabmap_rviz_plugins) NOT POINTCLOUD
+enjoy :)

@@ -1,7 +1,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <array>
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
@@ -14,7 +13,6 @@
  * - Resolutions are set to 480p (640x480).
  * - The node uses a single timer that fires at (number_of_cameras * 15) FPS.
  * - On each timer callback, only one camera is captured and published in a round-robin fashion.
- * - Images are compressed before publishing to reduce bandwidth.
  */
 
 class MultiCameraNode : public rclcpp::Node
@@ -24,10 +22,11 @@ public:
   : Node("multi_camera_node", options),
     current_camera_index_(0)
   {
-    // Declare parameters for resolution and fps
+    // Declare (and optionally get) private parameters for resolution and fps
     this->declare_parameter<int>("width", 640);
     this->declare_parameter<int>("height", 480);
-    this->declare_parameter<int>("fps", 20);
+    this->declare_parameter<int>("fps", 10);
+    this->declare_parameter<int>("quality", 70);  // JPEG quality (0-100)
 
     // Read the parameters
     width_ = this->get_parameter("width").as_int();
@@ -36,20 +35,28 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Using resolution %dx%d at %d FPS.", width_, height_, fps_);
 
-    // Define camera device paths
+    // Here you can specify the device indices or device paths.
+    // For example, if you have 4 cameras: 2 RealSense enumerated as /dev/video0, /dev/video1
+    // and 2 generic webcams enumerated as /dev/video2, /dev/video3, you could list them like so:
     camera_device_paths_ = {
-      "/dev/video6",  // Realsense D435i #1 (RGB) Left
-      "/dev/video13", // Realsense D435i #2 (Rrtt5treeEeEGB) Right
-      "/dev/video0",  // Generic Webcam #1 Top
-      "/dev/video14",  // Generic Webcam #2 Back
+      "/dev/video6",  // Realsense D435i #1 (RGB)
+       "/dev/video14",  // Realsense D435i #2 (RGB)
+       "/dev/video0",  // Generic Webcam #1
+      "/dev/video9",   // Generic Webcam #2
     };
-
-    // Initialize cameras and publishers
+// 
+    // For each device, create a VideoCapture and a publisher
     for (size_t i = 0; i < camera_device_paths_.size(); i++) {
       cv::VideoCapture cap;
       if (!cap.open(camera_device_paths_[i], cv::CAP_V4L2)) {
         RCLCPP_ERROR(this->get_logger(), "Failed to open camera: %s", camera_device_paths_[i].c_str());
+        // You may choose to throw or continue; here we'll continue with best-effort
       } else {
+        // Set resolution and fps
+        // if (i == 4) {  
+        //   cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        //   cap.set(cv::CAP_PROP_BUFFERSIZE, 3);
+        // }
         cap.set(cv::CAP_PROP_FRAME_WIDTH,  width_);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, height_);
         cap.set(cv::CAP_PROP_FPS,         fps_);
@@ -57,13 +64,14 @@ public:
       }
       caps_.push_back(std::move(cap));
 
-      // Create a publisher for compressed images
-      std::string topic_name = "/camera_" + std::to_string(i) + "/image_compressed";
-      auto pub = this->create_publisher<sensor_msgs::msg::CompressedImage>(topic_name, 10);
+      // Create a unique publisher for this camera
+      std::string topic_name = "/camera_" + std::to_string(i) + "/image_raw";
+      auto pub = this->create_publisher<sensor_msgs::msg::Image>(topic_name, 10);
       publishers_.push_back(pub);
     }
 
-    // Calculate total rate
+    // If we want each camera to effectively publish at 'fps_' but in a staggered manner,
+    // we run the timer at (number_of_cameras_ * fps_).
     auto total_rate = camera_device_paths_.size() * fps_;
     if (total_rate == 0) {
       RCLCPP_ERROR(this->get_logger(), "No cameras to capture, or invalid FPS. Exiting...");
@@ -72,7 +80,8 @@ public:
     }
 
     double timer_period = 1.0 / static_cast<double>(total_rate); // seconds
-    RCLCPP_INFO(this->get_logger(), "Creating timer at %.2f Hz for round-robin capturing.", 1.0 / timer_period);
+    RCLCPP_INFO(this->get_logger(), "Creating timer at %.2f Hz for round-robin capturing.",
+                1.0 / timer_period);
 
     timer_ = this->create_wall_timer(
       std::chrono::duration<double>(timer_period),
@@ -87,8 +96,10 @@ private:
       return;
     }
 
+    // Only capture from the current camera index
     size_t idx = current_camera_index_;
     if (idx >= caps_.size()) {
+      // Safety check; should not happen if code is consistent
       RCLCPP_WARN(this->get_logger(), "Camera index out of range.");
       return;
     }
@@ -96,22 +107,18 @@ private:
     auto & cap = caps_[idx];
     if (cap.isOpened()) {
       cv::Mat frame;
-      cap >> frame; // Capture frame
-
+      cap >> frame; // read a new frame from camera
       if (!frame.empty()) {
-        // Compress the image using JPEG
-        std::vector<uchar> buffer;
-        std::vector<int> compression_params = {cv::IMWRITE_JPEG_QUALITY, 50}; // 80% quality
-        cv::imencode(".jpg", frame, buffer, compression_params);
+        // Convert to ROS Image message
+        std_msgs::msg::Header header;
+        header.stamp = this->now();
+        header.frame_id = "camera_" + std::to_string(idx);
 
-        // Create a CompressedImage message
-        auto img_msg = std::make_unique<sensor_msgs::msg::CompressedImage>();
-        img_msg->header.stamp = this->now();
-        img_msg->header.frame_id = "camera_" + std::to_string(idx);
-        img_msg->format = "jpeg";
-        img_msg->data.assign(buffer.begin(), buffer.end());
+        // Use cv_bridge to convert OpenCV image (BGR) to sensor_msgs/Image
+        cv_bridge::CvImage cv_image(header, "bgr8", frame);
+        auto img_msg = cv_image.toImageMsg();
 
-        // Publish compressed image
+        // Publish
         publishers_[idx]->publish(*img_msg);
       } else {
         RCLCPP_WARN(this->get_logger(), "Empty frame from camera index %ld.", idx);
@@ -133,8 +140,8 @@ private:
   // For capturing frames
   std::vector<cv::VideoCapture> caps_;
 
-  // Publishers for each camera (compressed image)
-  std::vector<rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr> publishers_;
+  // Publishers for each camera
+  std::vector<rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> publishers_;
 
   // Timer for round-robin capture
   rclcpp::TimerBase::SharedPtr timer_;

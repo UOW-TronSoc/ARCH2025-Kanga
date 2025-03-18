@@ -14,5 +14,7 @@ sudo ip link set can1 up type can bitrate 250000
 sleep 2
 
 # Launch ROS 2
-source /home/tronsoc/kanga/telecoms/install/setup.bash  
-ros2 launch kanga_bringup kanga_bringup.launch.py
+source /home/tronsoc/kanga/kanga_launch/install/setup.bash 
+source /home/tronsoc/kanga/telecoms/install/setup.bash
+source /home/tronsoc/kanga/cameras/install/setup.bash
+ros2 launch kanga_launch kanga_launch.py

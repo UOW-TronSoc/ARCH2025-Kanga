@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>auto_mode</name>
+  <name>auto_mode_manual</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="hunter.dejong03@gmail.com">tronsoc</maintainer>
@@ -15,8 +15,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>custom_msgs</depend>
-  <depend>sensor_msgs</depend>
-
+  <depend>nav_msgs</depend>
 
 
   <export>
